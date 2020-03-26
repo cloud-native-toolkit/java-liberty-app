@@ -13,16 +13,13 @@ RUN mvn -N io.takari:maven:wrapper -Dmaven=3.5.0
 RUN ./mvnw install
 
 # Multi-stage build. New build stage that uses the UBI as the base image.
-FROM ibmcom/websphere-liberty:19.0.0.9-webProfile7-ubi-min
+FROM ibmcom/websphere-liberty:kernel-java8-ibmjava-ubi
 LABEL maintainer="IBM Java Engineering at IBM Cloud"
 ENV PATH /project/target/liberty/wlp/bin/:$PATH
 
 COPY --from=builder /app/target/liberty/wlp/usr/servers/defaultServer /config/
 
-# Grant write access to apps folder, this is to support old and new docker versions.
-# Liberty document reference : https://hub.docker.com/_/websphere-liberty/
 USER root
 RUN chmod g+w /config/apps
+RUN configure.sh
 USER 1001
-# install any missing features required by server config
-RUN installUtility install --acceptLicense defaultServer
